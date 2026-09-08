@@ -75,7 +75,6 @@
       align-items: center;
     }
 
-    /* Таймер */
     .timer-panel {
       background: #1e1e24;
       padding: 16px 24px;
@@ -128,7 +127,6 @@
     .btn-secondary { background: #2a2a35; color: #efeff1; }
     .btn-secondary:hover { background: #383846; }
 
-    /* ВКЛАДКА 1: АУКЦИОН */
     #tabBidding {
       width: 100%;
       max-width: 900px;
@@ -345,7 +343,6 @@
       transform: scale(1.01);
     }
 
-    /* ВКЛАДКА 2: КОЛЕСО */
     #tabWheel {
       display: none;
       width: 100%;
@@ -397,6 +394,7 @@
       box-shadow: 0 0 45px rgba(145, 70, 255, 0.4), 0 0 20px rgba(0, 230, 203, 0.3);
     }
 
+    /* Полностью прозрачный фон и отсутствие рамок у центрального хаба */
     .wheel-center-hub {
       position: absolute;
       top: 50%;
@@ -405,8 +403,8 @@
       width: 0px;
       height: 0px;
       border-radius: 50%;
-      background: #1e1e24;
-      border: 0px solid #00e6cb;
+      background: transparent;
+      border: none;
       box-shadow: none;
       display: none;
       align-items: center;
@@ -414,17 +412,15 @@
       overflow: hidden;
       pointer-events: none;
       z-index: 5;
-      transition: width 0.2s, height 0.2s;
     }
     .wheel-center-hub.active {
       display: flex;
-      border-width: 3px;
-      box-shadow: 0 0 16px rgba(0,0,0,0.8);
     }
     .wheel-center-hub img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      display: block;
     }
 
     .btn-spin {
@@ -559,7 +555,6 @@
       gap: 8px;
     }
 
-    /* ВКЛАДКА 3: НАСТРОЙКИ */
     #tabSettings {
       display: none;
       width: 100%;
@@ -929,7 +924,6 @@
       }
     }
 
-    // Проигрывание кастомного или синтезированного звука клика
     function playTickSound() {
       if (customTickBase64) {
         const audio = new Audio(customTickBase64);
@@ -966,7 +960,6 @@
       source.start();
     }
 
-    // Проигрывание кастомного или синтезированного звука победы
     function playWinSound() {
       if (customWinBase64) {
         const audio = new Audio(customWinBase64);
@@ -1081,7 +1074,6 @@
       }
     }
 
-    // Таймер
     let timeLeft = parseInt(localStorage.getItem(STORAGE_KEY_TIMER_SEC)) || 0;
     let timerInterval = null;
 
@@ -1195,7 +1187,6 @@
       }
     }
 
-    // Лоты
     let items = [];
     const savedItems = localStorage.getItem(STORAGE_KEY_ITEMS);
     if (savedItems) {
@@ -1470,7 +1461,6 @@
       event.target.value = "";
     }
 
-    // Кастомизация визуала
     function changeColorTheme(theme) {
       currentTheme = theme;
       localStorage.setItem(STORAGE_KEY_THEME, theme);
@@ -1756,7 +1746,6 @@
       requestAnimationFrame(animate);
     }
 
-    // Инициализация интерфейса
     document.getElementById("hideEliminatedCheckbox").checked = hideEliminated;
     document.getElementById("smartMergeCheckbox").checked = smartMergeEnabled;
     document.getElementById("themeSelect").value = currentTheme;
