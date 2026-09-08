@@ -394,7 +394,6 @@
       box-shadow: 0 0 45px rgba(145, 70, 255, 0.4), 0 0 20px rgba(0, 230, 203, 0.3);
     }
 
-    /* Полностью прозрачный фон и отсутствие рамок у центрального хаба */
     .wheel-center-hub {
       position: absolute;
       top: 50%;
@@ -639,16 +638,81 @@
       display: flex;
       gap: 8px;
     }
+
+    /* Стили для режима AFK Заглушки с фоновыми частицами */
+    body.afk-mode {
+      background: radial-gradient(circle at center, #1b1b24 0%, #09090b 100%);
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    body.afk-mode .header-bar,
+    body.afk-mode .timer-panel,
+    body.afk-mode #tabBidding,
+    body.afk-mode #tabSettings,
+    body.afk-mode .wheel-sidebar,
+    body.afk-mode .btn-spin,
+    body.afk-mode .winner-banner,
+    body.afk-mode button[onclick*="switchTab"] {
+      display: none !important;
+    }
+    body.afk-mode #tabWheel {
+      display: flex !important;
+    }
+    
+    .afk-canvas-bg {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body.afk-mode .afk-canvas-bg {
+      display: block;
+    }
+    body.afk-mode .wheel-container {
+      z-index: 2;
+    }
+
+    .afk-watermark {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #a1a1aa;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      animation: afkPulse 2s infinite alternate;
+      pointer-events: none;
+      z-index: 2;
+    }
+    body.afk-mode .afk-watermark {
+      display: block;
+    }
+    @keyframes afkPulse {
+      from { opacity: 0.3; transform: scale(1); }
+      to { opacity: 0.8; transform: scale(1.02); }
+    }
   </style>
 </head>
-<body>
+<body onclick="checkExitAfk(event)">
+
+  <!-- Фоновый холст для частиц в AFK режиме -->
+  <canvas class="afk-canvas-bg" id="afkBgCanvas"></canvas>
 
   <div class="header-bar">
     <h1 class="main-title">БЛЯДСКИЙ АУК</h1>
-    <div class="tab-navigation">
-      <button class="tab-btn active" id="tabNavBidding" onclick="switchTab('bidding')">Аукцион</button>
-      <button class="tab-btn" id="tabNavWheel" onclick="switchTab('wheel')">Колесо</button>
-      <button class="tab-btn" id="tabNavSettings" onclick="switchTab('settings')">Настройки</button>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="tab-navigation">
+        <button class="tab-btn active" id="tabNavBidding" onclick="switchTab('bidding')">Аукцион</button>
+        <button class="tab-btn" id="tabNavWheel" onclick="switchTab('wheel')">Колесо</button>
+        <button class="tab-btn" id="tabNavSettings" onclick="switchTab('settings')">Настройки</button>
+      </div>
+      <button class="btn btn-secondary" style="background: #1e1e24; border: 1px solid #2d2d38; color: #00e6cb; font-size: 12px; padding: 8px 14px;" onclick="toggleAfkMode(true)">📺 AFK Заглушка</button>
     </div>
   </div>
 
@@ -871,6 +935,8 @@
     </div>
   </div>
 
+  <div class="afk-watermark">Технический перерыв / Скоро вернемся</div>
+
   <script>
     const STORAGE_KEY_ITEMS = "pointauc_clone_items";
     const STORAGE_KEY_MODE = "pointauc_clone_mode";
@@ -1074,6 +1140,81 @@
       }
     }
 
+    // Логика AFK заглушки с пассивным вращением и частицами
+    let afkAnimationId = null;
+
+    function toggleAfkMode(enabled) {
+      if (enabled) {
+        document.body.classList.add('afk-mode');
+        initAfkParticles();
+        startAfkPassiveSpin();
+      } else {
+        document.body.classList.remove('afk-mode');
+        if (afkAnimationId) cancelAnimationFrame(afkAnimationId);
+        switchTab(currentTab);
+      }
+    }
+
+    function checkExitAfk(event) {
+      if (!document.body.classList.contains('afk-mode')) return;
+      if (event.target.tagName === 'CANVAS' || event.target === document.body || event.target.classList.contains('afk-watermark')) {
+        toggleAfkMode(false);
+      }
+    }
+
+    // Частицы на заднем плане
+    const bgCanvas = document.getElementById("afkBgCanvas");
+    const bgCtx = bgCanvas.getContext("2d");
+    let particles = [];
+
+    function initAfkParticles() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+      particles = [];
+      for (let i = 0; i < 40; i++) {
+        particles.push({
+          x: Math.random() * bgCanvas.width,
+          y: Math.random() * bgCanvas.height,
+          radius: Math.random() * 2 + 1,
+          speedY: (Math.random() - 0.5) * 0.4,
+          speedX: (Math.random() - 0.5) * 0.4,
+          alpha: Math.random() * 0.5 + 0.2
+        });
+      }
+    }
+
+    function startAfkPassiveSpin() {
+      function loop() {
+        if (!document.body.classList.contains('afk-mode')) return;
+
+        // Рисуем частицы
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        bgCtx.fillStyle = "rgba(255, 255, 255, 0.6)";
+        particles.forEach(p => {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          if (p.x < 0) p.x = bgCanvas.width;
+          if (p.x > bgCanvas.width) p.x = 0;
+          if (p.y < 0) p.y = bgCanvas.height;
+          if (p.y > bgCanvas.height) p.y = 0;
+
+          bgCtx.beginPath();
+          bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          bgCtx.fillStyle = `rgba(0, 230, 203, ${p.alpha})`;
+          bgCtx.fill();
+        });
+
+        // Медленно крутим колесо, если оно не крутится активно
+        if (!isSpinning) {
+          currentAngleOffset += 0.003;
+          drawWheel(currentAngleOffset);
+        }
+
+        afkAnimationId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
     let timeLeft = parseInt(localStorage.getItem(STORAGE_KEY_TIMER_SEC)) || 0;
     let timerInterval = null;
 
@@ -1227,7 +1368,7 @@
       document.getElementById("modeClassicBtn").classList.toggle("active", mode === 'classic');
       document.getElementById("modeDropBtn").classList.toggle("active", mode === 'drop');
       renderList();
-      if (currentTab === 'wheel') {
+      if (currentTab === 'wheel' || document.body.classList.contains('afk-mode')) {
         renderWheelSidebar();
         drawWheel(currentAngleOffset);
       }
@@ -1354,7 +1495,7 @@
         item.eliminated = false;
         saveItems();
         renderList();
-        if (currentTab === 'wheel') {
+        if (currentTab === 'wheel' || document.body.classList.contains('afk-mode')) {
           renderWheelSidebar();
           drawWheel(currentAngleOffset);
         }
@@ -1394,7 +1535,7 @@
       document.getElementById("amountInput").value = "";
       saveItems();
       renderList();
-      if (currentTab === 'wheel') {
+      if (currentTab === 'wheel' || document.body.classList.contains('afk-mode')) {
         renderWheelSidebar();
         drawWheel(currentAngleOffset);
       }
