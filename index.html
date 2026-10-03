@@ -833,6 +833,14 @@
 
           <div class="wheel-custom-box">
             <div class="wheel-custom-row">
+              <span title="Время вращения колеса">Время вращения:</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="range" id="wheelSpinDurationInput" min="3" max="90" value="7" oninput="changeSpinDuration(this.value)" style="width: 80px;">
+                <span id="wheelSpinDurationLabel" style="min-width: 30px; text-align:right;">7s</span>
+              </div>
+            </div>
+
+            <div class="wheel-custom-row">
               <span>Палитра цветов:</span>
               <select id="wheelThemeSelect" onchange="changeColorTheme(this.value)">
                 <option value="classic">Классическая</option>
@@ -858,6 +866,17 @@
     <div id="tabSettings">
       <div class="settings-panel">
         <h4 class="settings-section-title">Визуал колеса (по умолчанию всё выключено)</h4>
+
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Время вращения колеса (сек)</span>
+            <small>От 3 до 90 секунд</small>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="range" id="spinDurationInput" min="3" max="90" value="7" oninput="changeSpinDuration(this.value)">
+            <span id="spinDurationLabel" style="min-width: 30px; text-align:right;">7s</span>
+          </div>
+        </div>
 
         <div class="settings-row">
           <div class="settings-label">
@@ -987,6 +1006,7 @@
     const STORAGE_KEY_HIGHLIGHT_POINTER = "pointauc_clone_highlight_pointer";
     const STORAGE_KEY_CUSTOM_TICK = "pointauc_clone_custom_tick";
     const STORAGE_KEY_CUSTOM_WIN = "pointauc_clone_custom_win";
+    const STORAGE_KEY_SPIN_DURATION = "pointauc_clone_spin_duration";
 
     let currentMode = localStorage.getItem(STORAGE_KEY_MODE) || 'classic';
     let currentTab = localStorage.getItem(STORAGE_KEY_TAB) || 'bidding';
@@ -1002,6 +1022,7 @@
     let pointerColor = localStorage.getItem(STORAGE_KEY_POINTER_COLOR) || '#ff3344';
     let sectorBorderWidth = parseInt(localStorage.getItem(STORAGE_KEY_BORDER_WIDTH)) || 0;
     let hubSize = parseInt(localStorage.getItem(STORAGE_KEY_HUB_SIZE)) || 0;
+    let spinDuration = parseInt(localStorage.getItem(STORAGE_KEY_SPIN_DURATION)) || 7;
 
     let customTickBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_TICK) || '';
     let customWinBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_WIN) || '';
@@ -1431,6 +1452,21 @@
       localStorage.setItem(STORAGE_KEY_FORCE_SEPARATE, forceSeparateEnabled ? 'true' : 'false');
     }
 
+    function changeSpinDuration(val) {
+      spinDuration = parseInt(val);
+      localStorage.setItem(STORAGE_KEY_SPIN_DURATION, spinDuration);
+      
+      const el1 = document.getElementById("spinDurationInput");
+      const el2 = document.getElementById("wheelSpinDurationInput");
+      const lbl1 = document.getElementById("spinDurationLabel");
+      const lbl2 = document.getElementById("wheelSpinDurationLabel");
+      
+      if(el1) el1.value = spinDuration;
+      if(el2) el2.value = spinDuration;
+      if(lbl1) lbl1.textContent = spinDuration + "s";
+      if(lbl2) lbl2.textContent = spinDuration + "s";
+    }
+
     function setSortMode(mode) {
       sortMode = mode;
       localStorage.setItem(STORAGE_KEY_SORT_MODE, mode);
@@ -1563,7 +1599,6 @@
 
       const normName = name.toLowerCase();
 
-      // Если включены раздельные слоты ИЛИ количество больше 1, добавляем независимо
       if (qty > 1 || forceSeparateEnabled) {
           for (let i = 0; i < qty; i++) {
               items.push({ id: Date.now() + Math.floor(Math.random()*10000) + i, name, amount, eliminated: false });
@@ -1878,7 +1913,8 @@
       banner.textContent = "";
       banner.className = "winner-banner";
 
-      const duration = 7000;
+      // Используем переменную времени
+      const duration = spinDuration * 1000;
       const weights = getWeights();
       const rand = Math.random();
       let acc = 0;
@@ -1900,7 +1936,9 @@
       const targetInSlice = startAngle + sliceSize * (0.2 + Math.random() * 0.6);
 
       const pointerAngle = 1.5 * Math.PI;
-      const fullTurns = (6 + Math.floor(Math.random() * 2)) * 2 * Math.PI;
+      // Увеличиваем количество оборотов пропорционально времени
+      const baseTurns = Math.floor(duration / 1000);
+      const fullTurns = (baseTurns + Math.floor(Math.random() * 2)) * 2 * Math.PI;
       const finalAngle = fullTurns + (pointerAngle - targetInSlice);
 
       const startTime = performance.now();
@@ -1909,6 +1947,7 @@
       function animate(time) {
         const elapsed = time - startTime;
         const progress = Math.min(elapsed / duration, 1);
+        // Делаем кривую торможения более плавной для долгих спинов
         const easeOut = 1 - Math.pow(1 - progress, 3.5);
 
         currentAngleOffset = initialOffset + (finalAngle - initialOffset) * easeOut;
@@ -1961,6 +2000,17 @@
     document.getElementById("pointerColorInput").value = pointerColor;
     document.getElementById("borderWidthInput").value = sectorBorderWidth;
     document.getElementById("hubSizeInput").value = hubSize;
+    
+    // Синхронизация времени вращения при загрузке
+    const el1 = document.getElementById("spinDurationInput");
+    const el2 = document.getElementById("wheelSpinDurationInput");
+    const lbl1 = document.getElementById("spinDurationLabel");
+    const lbl2 = document.getElementById("wheelSpinDurationLabel");
+    if(el1) el1.value = spinDuration;
+    if(el2) el2.value = spinDuration;
+    if(lbl1) lbl1.textContent = spinDuration + "s";
+    if(lbl2) lbl2.textContent = spinDuration + "s";
+    
     document.getElementById("wheelPointer").style.borderTopColor = pointerColor;
 
     toggleGlow(isGlowEnabled);
