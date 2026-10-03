@@ -740,7 +740,6 @@
       <div class="timer-panel">
         <div class="timer-display" id="timerDisplay">00:00</div>
         
-        <!-- Ручной ввод таймера -->
         <div class="timer-input-row">
           <input type="number" id="manualMinInput" placeholder="Мин" min="0">
           <input type="number" id="manualSecInput" placeholder="Сек" min="0" max="59">
@@ -772,10 +771,14 @@
         </div>
 
         <div class="options-bar">
-          <div class="options-group">
+          <div class="options-group" style="display: flex; gap: 12px; flex-wrap: wrap;">
             <label class="checkbox-label" title="При вводе схожего названия предлагает слить ставку в существующий лот">
               <input type="checkbox" id="smartMergeCheckbox" onchange="toggleSmartMerge()">
-              <span>Умное слияние дубликатов</span>
+              <span>Умное слияние</span>
+            </label>
+            <label class="checkbox-label" title="Отключает автослияние. Каждый ввод будет создавать новый лот, даже если имена полностью совпадают">
+              <input type="checkbox" id="forceSeparateCheckbox" onchange="toggleForceSeparate()">
+              <span>Раздельные слоты</span>
             </label>
           </div>
 
@@ -790,6 +793,7 @@
         <div class="input-group">
           <input type="text" id="nameInput" placeholder="Название лота (фильм, игра, челлендж)">
           <input type="number" id="amountInput" placeholder="Сумма" min="1">
+          <input type="number" id="qtyInput" placeholder="Шт." min="1" value="1" title="Количество слотов" style="flex: 0.5;">
           <button class="btn btn-primary" style="flex:0.8;" onclick="addItem()">Добавить</button>
         </div>
 
@@ -972,6 +976,7 @@
     const STORAGE_KEY_TIMER_TARGET = "pointauc_clone_timer_target";
     const STORAGE_KEY_HIDE_ELIMINATED = "pointauc_clone_hide_eliminated";
     const STORAGE_KEY_SMART_MERGE = "pointauc_clone_smart_merge";
+    const STORAGE_KEY_FORCE_SEPARATE = "pointauc_clone_force_separate";
     const STORAGE_KEY_SORT_MODE = "pointauc_clone_sort_mode";
     const STORAGE_KEY_THEME = "pointauc_clone_theme";
     const STORAGE_KEY_CENTER_MEDIA = "pointauc_clone_center_media";
@@ -987,6 +992,7 @@
     let currentTab = localStorage.getItem(STORAGE_KEY_TAB) || 'bidding';
     let hideEliminated = localStorage.getItem(STORAGE_KEY_HIDE_ELIMINATED) === 'true';
     let smartMergeEnabled = localStorage.getItem(STORAGE_KEY_SMART_MERGE) === 'true';
+    let forceSeparateEnabled = localStorage.getItem(STORAGE_KEY_FORCE_SEPARATE) === 'true';
     let sortMode = localStorage.getItem(STORAGE_KEY_SORT_MODE) || 'amount';
 
     let currentTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'classic';
@@ -1420,6 +1426,11 @@
       localStorage.setItem(STORAGE_KEY_SMART_MERGE, smartMergeEnabled ? 'true' : 'false');
     }
 
+    function toggleForceSeparate() {
+      forceSeparateEnabled = document.getElementById("forceSeparateCheckbox").checked;
+      localStorage.setItem(STORAGE_KEY_FORCE_SEPARATE, forceSeparateEnabled ? 'true' : 'false');
+    }
+
     function setSortMode(mode) {
       sortMode = mode;
       localStorage.setItem(STORAGE_KEY_SORT_MODE, mode);
@@ -1546,34 +1557,45 @@
     function addItem() {
       const name = document.getElementById("nameInput").value.trim();
       const amount = parseFloat(document.getElementById("amountInput").value);
-      if (!name || isNaN(amount) || amount <= 0) return;
+      const qty = parseInt(document.getElementById("qtyInput").value) || 1;
+
+      if (!name || isNaN(amount) || amount <= 0 || qty < 1) return;
 
       const normName = name.toLowerCase();
-      let matchedItem = null;
 
-      if (smartMergeEnabled) {
-        matchedItem = items.find(i => {
-          const iname = i.name.toLowerCase();
-          return iname === normName || iname.includes(normName) || normName.includes(iname);
-        });
-
-        if (matchedItem && matchedItem.name.toLowerCase() !== normName) {
-          const mergeConfirmed = confirm(`Найден похожий лот: "${matchedItem.name}".\nОбъединить новую ставку (+${amount}) с ним?`);
-          if (!mergeConfirmed) matchedItem = null;
-        }
+      // Если включены раздельные слоты ИЛИ количество больше 1, добавляем независимо
+      if (qty > 1 || forceSeparateEnabled) {
+          for (let i = 0; i < qty; i++) {
+              items.push({ id: Date.now() + Math.floor(Math.random()*10000) + i, name, amount, eliminated: false });
+          }
       } else {
-        matchedItem = items.find(i => i.name.toLowerCase() === normName);
-      }
+          let matchedItem = null;
 
-      if (matchedItem) {
-        matchedItem.amount += amount;
-        matchedItem.eliminated = false;
-      } else {
-        items.push({ id: Date.now() + Math.floor(Math.random()*1000), name, amount, eliminated: false });
+          if (smartMergeEnabled) {
+            matchedItem = items.find(i => {
+              const iname = i.name.toLowerCase();
+              return iname === normName || iname.includes(normName) || normName.includes(iname);
+            });
+
+            if (matchedItem && matchedItem.name.toLowerCase() !== normName) {
+              const mergeConfirmed = confirm(`Найден похожий лот: "${matchedItem.name}".\nОбъединить новую ставку (+${amount}) с ним?`);
+              if (!mergeConfirmed) matchedItem = null;
+            }
+          } else {
+            matchedItem = items.find(i => i.name.toLowerCase() === normName);
+          }
+
+          if (matchedItem) {
+            matchedItem.amount += amount;
+            matchedItem.eliminated = false;
+          } else {
+            items.push({ id: Date.now() + Math.floor(Math.random()*10000), name, amount, eliminated: false });
+          }
       }
 
       document.getElementById("nameInput").value = "";
       document.getElementById("amountInput").value = "";
+      document.getElementById("qtyInput").value = "1";
       saveItems();
       renderList();
       if (currentTab === 'wheel' || document.body.classList.contains('afk-mode')) {
@@ -1928,8 +1950,10 @@
       requestAnimationFrame(animate);
     }
 
+    // Инициализация
     document.getElementById("hideEliminatedCheckbox").checked = hideEliminated;
     document.getElementById("smartMergeCheckbox").checked = smartMergeEnabled;
+    document.getElementById("forceSeparateCheckbox").checked = forceSeparateEnabled;
     document.getElementById("themeSelect").value = currentTheme;
     document.getElementById("wheelThemeSelect").value = currentTheme;
     document.getElementById("glowCheckbox").checked = isGlowEnabled;
