@@ -658,6 +658,32 @@
       gap: 8px;
     }
 
+    /* Анимация Toast-уведомления */
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #9146ff;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 12px 24px;
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: opacity 0.3s, bottom 0.3s;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      bottom: 50px;
+    }
+
     body.afk-mode {
       background: radial-gradient(circle at center, #1b1b24 0%, #09090b 100%);
       justify-content: center;
@@ -719,6 +745,8 @@
 </head>
 <body onclick="checkExitAfk(event)">
 
+  <div id="toast"></div>
+
   <canvas class="afk-canvas-bg" id="afkBgCanvas"></canvas>
 
   <div class="header-bar">
@@ -766,6 +794,7 @@
           </div>
 
           <div style="display: flex; gap: 8px;">
+            <button class="btn-sort" style="color: #adadb8; border-color: #383846;" onclick="undoAction()">↩ Отменить (Ctrl+Z)</button>
             <button class="btn-sort" style="color: #eb0400; border-color: #5c1818;" onclick="clearAllItems()">Очистить</button>
           </div>
         </div>
@@ -1027,6 +1056,46 @@
     let customTickBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_TICK) || '';
     let customWinBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_WIN) || '';
 
+    // Машина времени (Отмена действий)
+    let historyStack = [];
+    let toastTimeout;
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = "show";
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
+    }
+
+    function pushToHistory() {
+      historyStack.push(JSON.stringify(items));
+      if (historyStack.length > 20) {
+        historyStack.shift(); // Храним только последние 20 шагов
+      }
+    }
+
+    function undoAction() {
+      if (isSpinning) return;
+      if (historyStack.length > 0) {
+        const prevStateStr = historyStack.pop();
+        try {
+          items = JSON.parse(prevStateStr);
+          saveItems();
+          renderList();
+          if (currentTab === 'wheel' || document.body.classList.contains('afk-mode')) {
+            renderWheelSidebar();
+            drawWheel(currentAngleOffset);
+          }
+          showToast("Действие отменено!");
+        } catch(e) {
+          console.error("Ошибка при восстановлении истории", e);
+        }
+      } else {
+        showToast("Нет действий для отмены");
+      }
+    }
+
     const colorThemes = {
       classic: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#e91e63'],
       neon: ['#ff0055', '#00e6cb', '#9146ff', '#ffe600', '#0070f3', '#ff5500', '#00ff66', '#bd00ff'],
@@ -1147,7 +1216,7 @@
             localStorage.setItem(STORAGE_KEY_CUSTOM_WIN, base64);
             document.getElementById("resetWinBtn").style.display = "inline-block";
           }
-          alert("Звук успешно загружен!");
+          showToast("Звук успешно загружен!");
         } catch(err) {
           alert("Файл слишком большой для сохранения в браузере!");
         }
@@ -1577,6 +1646,7 @@
 
     function quickAddById(id, delta) {
       if (isSpinning) return;
+      pushToHistory();
       const item = items.find(i => i.id === id);
       if (item) {
         item.amount += delta;
@@ -1587,6 +1657,7 @@
           renderWheelSidebar();
           drawWheel(currentAngleOffset);
         }
+        showToast(`Добавлено +${delta}`);
       }
     }
 
@@ -1597,6 +1668,7 @@
 
       if (!name || isNaN(amount) || amount <= 0 || qty < 1) return;
 
+      pushToHistory();
       const normName = name.toLowerCase();
 
       if (qty > 1 || forceSeparateEnabled) {
@@ -1637,25 +1709,30 @@
         renderWheelSidebar();
         drawWheel(currentAngleOffset);
       }
+      showToast(`Лот "${name}" добавлен`);
     }
 
     function removeItemById(id) {
       if (isSpinning) return;
+      pushToHistory();
       items = items.filter(i => i.id !== id);
       saveItems();
       renderList();
       drawWheel(currentAngleOffset);
+      showToast("Лот удален");
     }
 
     function clearAllItems() {
       if (isSpinning) return;
       if (items.length === 0) return;
       if (confirm("Точно очистить все ставки?")) {
+        pushToHistory();
         items = [];
         saveItems();
         renderList();
         renderWheelSidebar();
         drawWheel(currentAngleOffset);
+        showToast("Список очищен");
       }
     }
 
@@ -1685,13 +1762,15 @@
           if (!Array.isArray(parsed)) throw new Error();
           const valid = parsed.filter(i => i && typeof i.name === 'string' && typeof i.amount === 'number' && i.amount > 0);
           if (valid.length === 0) { alert("Лоты не найдены!"); return; }
+          
+          pushToHistory();
           let tid = Date.now();
           items = valid.map(i => ({ id: i.id || tid++, name: i.name, amount: i.amount, eliminated: !!i.eliminated }));
           saveItems();
           renderList();
           renderWheelSidebar();
           drawWheel(currentAngleOffset);
-          alert(`Успешно импортировано лотов: ${items.length}`);
+          showToast(`Успешно импортировано лотов: ${items.length}`);
         } catch (err) {
           alert("Ошибка при чтении JSON-файла!");
         }
@@ -1906,6 +1985,7 @@
         return;
       }
 
+      pushToHistory(); // Сохраняем состояние перед выбыванием
       initAudio();
       isSpinning = true;
       document.getElementById("spinBtn").disabled = true;
@@ -1913,7 +1993,6 @@
       banner.textContent = "";
       banner.className = "winner-banner";
 
-      // Используем переменную времени
       const duration = spinDuration * 1000;
       const weights = getWeights();
       const rand = Math.random();
@@ -1936,7 +2015,6 @@
       const targetInSlice = startAngle + sliceSize * (0.2 + Math.random() * 0.6);
 
       const pointerAngle = 1.5 * Math.PI;
-      // Увеличиваем количество оборотов пропорционально времени
       const baseTurns = Math.floor(duration / 1000);
       const fullTurns = (baseTurns + Math.floor(Math.random() * 2)) * 2 * Math.PI;
       const finalAngle = fullTurns + (pointerAngle - targetInSlice);
@@ -1947,7 +2025,6 @@
       function animate(time) {
         const elapsed = time - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // Делаем кривую торможения более плавной для долгих спинов
         const easeOut = 1 - Math.pow(1 - progress, 3.5);
 
         currentAngleOffset = initialOffset + (finalAngle - initialOffset) * easeOut;
@@ -1992,12 +2069,25 @@
     // Слушатель горячих клавиш (отключается, если активен ввод текста)
     document.addEventListener('keydown', function(e) {
       const activeTag = document.activeElement.tagName;
+      
+      // Обработка Ctrl+Z / Cmd+Z для отмены
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') {
+        // Если мы в инпуте, пусть работает стандартная отмена текста
+        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+          return;
+        }
+        e.preventDefault();
+        undoAction();
+        return;
+      }
+
+      // Если мы в инпуте, блокируем все остальные горячие клавиши
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
         return; 
       }
 
       if (e.code === 'Space') {
-        e.preventDefault(); // Запрещаем скролл страницы
+        e.preventDefault();
         if (!isSpinning && getActiveItems().length > 0) {
           if (currentTab !== 'wheel' && !document.body.classList.contains('afk-mode')) {
             switchTab('wheel');
@@ -2030,7 +2120,6 @@
     document.getElementById("borderWidthInput").value = sectorBorderWidth;
     document.getElementById("hubSizeInput").value = hubSize;
     
-    // Синхронизация времени вращения при загрузке
     const el1 = document.getElementById("spinDurationInput");
     const el2 = document.getElementById("wheelSpinDurationInput");
     const lbl1 = document.getElementById("spinDurationLabel");
