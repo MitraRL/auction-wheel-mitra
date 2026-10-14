@@ -200,6 +200,26 @@
       color: #fff;
     }
 
+    /* Плашка Общего Банка */
+    .total-bank-badge {
+      background: rgba(0, 230, 203, 0.1);
+      border: 1px solid rgba(0, 230, 203, 0.4);
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #efeff1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 12px rgba(0, 230, 203, 0.15);
+    }
+    .total-bank-badge strong {
+      color: #00e6cb;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+
     .options-bar {
       display: flex;
       justify-content: space-between;
@@ -495,7 +515,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       padding-bottom: 8px;
       border-bottom: 1px solid #2d2d38;
     }
@@ -505,6 +525,23 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: #adadb8;
+    }
+
+    .sidebar-bank-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #141417;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #adadb8;
+      border: 1px solid #252530;
+    }
+    .sidebar-bank-row strong {
+      color: #00e6cb;
+      font-size: 15px;
     }
 
     .hide-toggle {
@@ -933,6 +970,10 @@
             <button class="mode-btn" id="modeDropBtn" onclick="setMode('drop')">ВЫБЫВАНИЕ</button>
           </div>
 
+          <div class="total-bank-badge" title="Сумма всех слотов в аукционе">
+            💰 Банк: <strong id="totalBankAmount">0</strong>
+          </div>
+
           <div style="display: flex; gap: 8px;">
             <button class="btn-sort" style="color: #adadb8; border-color: #383846;" onclick="undoAction()">↩ Отменить (Ctrl+Z)</button>
             <button class="btn-sort" style="color: #eb0400; border-color: #5c1818;" onclick="clearAllItems()">Очистить</button>
@@ -968,7 +1009,9 @@
 
         <div class="items-table" id="itemsList"></div>
 
-        <button class="btn-goto-wheel" onclick="switchTab('wheel')">Крутить колесо (Лотов: <span id="lotsCount">0</span>)</button>
+        <button class="btn-goto-wheel" onclick="switchTab('wheel')">
+          Крутить колесо (Лотов: <span id="lotsCount">0</span> &nbsp;|&nbsp; Банк: <span id="btnTotalBank">0</span>)
+        </button>
       </div>
     </div>
 
@@ -998,6 +1041,12 @@
               <span>Скрыть выбывших</span>
             </label>
           </div>
+
+          <div class="sidebar-bank-row">
+            <span>💰 Общий банк:</span>
+            <strong id="wheelTotalBank">0</strong>
+          </div>
+
           <div class="wheel-participants-list" id="wheelParticipantsList"></div>
 
           <div class="wheel-custom-box">
@@ -1249,10 +1298,8 @@
     let customTickBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_TICK) || '';
     let customWinBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_WIN) || '';
 
-    // Настройка автозаписи победителей (по умолчанию включена)
     let autoRecordWinner = localStorage.getItem(STORAGE_KEY_AUTO_RECORD_WINNER) !== 'false';
 
-    // Загрузка таблицы победителей и списка должников
     let winnersStats = [];
     try {
       const savedWinners = localStorage.getItem(STORAGE_KEY_WINNERS_STATS);
@@ -1265,7 +1312,6 @@
       if (savedDebtors) debtorsList = JSON.parse(savedDebtors);
     } catch (e) { debtorsList = []; }
 
-    // Машина времени (Отмена действий)
     let historyStack = [];
     let toastTimeout;
 
@@ -1305,7 +1351,20 @@
       }
     }
 
-    // Функции для Таблицы Победителей и Должников
+    // Подсчет и обновление общей суммы (банка) всех слотов
+    function updateTotalBankUI() {
+      const totalSum = items.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+      const formatted = totalSum.toLocaleString('ru-RU');
+      
+      const el1 = document.getElementById("totalBankAmount");
+      const el2 = document.getElementById("btnTotalBank");
+      const el3 = document.getElementById("wheelTotalBank");
+      
+      if (el1) el1.textContent = formatted;
+      if (el2) el2.textContent = formatted;
+      if (el3) el3.textContent = formatted;
+    }
+
     function saveWinnersStats() {
       localStorage.setItem(STORAGE_KEY_WINNERS_STATS, JSON.stringify(winnersStats));
     }
@@ -1900,6 +1959,7 @@
     function saveItems() {
       localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(items));
       document.getElementById("lotsCount").textContent = items.length;
+      updateTotalBankUI();
     }
 
     function setMode(mode) {
@@ -1981,6 +2041,7 @@
       const listEl = document.getElementById("itemsList");
       listEl.innerHTML = "";
       document.getElementById("lotsCount").textContent = items.length;
+      updateTotalBankUI();
 
       const active = getActiveItems();
       const weights = getWeights();
@@ -2021,6 +2082,8 @@
       const activeCount = items.filter(i => !i.eliminated).length;
       document.getElementById("activeLotsCount").textContent = activeCount;
       document.getElementById("totalLotsCount").textContent = items.length;
+      updateTotalBankUI();
+
       const palette = colorThemes[currentTheme];
       const sorted = getSortedItems();
 
@@ -2565,6 +2628,7 @@
     applyCenterMedia();
     applyAudioButtons();
     updateDebtorsBadge();
+    updateTotalBankUI();
 
     setSortMode(sortMode);
     setMode(currentMode);
