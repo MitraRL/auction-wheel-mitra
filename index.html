@@ -45,13 +45,15 @@
       border-radius: 10px;
       padding: 4px;
       gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .tab-btn {
       background: transparent;
       border: none;
       color: #adadb8;
-      padding: 8px 24px;
+      padding: 8px 20px;
       font-size: 13px;
       font-weight: 700;
       border-radius: 8px;
@@ -573,6 +575,142 @@
       gap: 8px;
     }
 
+    /* ВКЛАДКА: БАЗА (ПОБЕДИТЕЛИ И ДОЛЖНИКИ) */
+    #tabRecords {
+      display: none;
+      width: 100%;
+      max-width: 1040px;
+    }
+
+    .records-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+    @media (max-width: 820px) {
+      .records-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .record-panel {
+      background: #1e1e24;
+      border: 1px solid #2d2d38;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #2d2d38;
+    }
+    .record-header h3 {
+      margin: 0;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .record-header.winners-title h3 { color: #00e6cb; }
+    .record-header.debtors-title h3 { color: #ff4444; }
+
+    .record-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .record-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #141417;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 4px solid #9146ff;
+      gap: 10px;
+    }
+    .record-card.winner-card { border-left-color: #00e6cb; }
+    .record-card.winner-card.top-1 { border-left-color: #ffd700; background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, #141417 100%); }
+    .record-card.debtor-card { border-left-color: #ff4444; }
+
+    .rank-badge {
+      font-weight: 900;
+      font-size: 13px;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #26262f;
+      color: #adadb8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .top-1 .rank-badge { background: #ffd700; color: #000; }
+    .top-2 .rank-badge { background: #c0c0c0; color: #000; }
+    .top-3 .rank-badge { background: #cd7f32; color: #000; }
+
+    .win-badge {
+      background: rgba(0, 230, 203, 0.12);
+      border: 1px solid rgba(0, 230, 203, 0.35);
+      color: #00e6cb;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      min-width: 68px;
+      text-align: center;
+    }
+
+    .debt-note {
+      font-size: 12px;
+      color: #ff8888;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+    .debt-date {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .btn-forgive {
+      background: rgba(46, 204, 113, 0.15);
+      border: 1px solid #2ecc71;
+      color: #2ecc71;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-forgive:hover {
+      background: #2ecc71;
+      color: #000;
+    }
+
+    .empty-placeholder {
+      text-align: center;
+      color: #666;
+      padding: 28px 12px;
+      font-size: 13px;
+      border: 1px dashed #2d2d38;
+      border-radius: 8px;
+    }
+
     #tabSettings {
       display: none;
       width: 100%;
@@ -693,6 +831,7 @@
     body.afk-mode .header-bar,
     body.afk-mode .timer-panel,
     body.afk-mode #tabBidding,
+    body.afk-mode #tabRecords,
     body.afk-mode #tabSettings,
     body.afk-mode .wheel-sidebar,
     body.afk-mode .btn-spin,
@@ -751,13 +890,14 @@
 
   <div class="header-bar">
     <h1 class="main-title">БЛЯДСКИЙ АУК</h1>
-    <div style="display: flex; gap: 12px; align-items: center;">
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;">
       <div class="tab-navigation">
         <button class="tab-btn active" id="tabNavBidding" onclick="switchTab('bidding')">Аукцион</button>
         <button class="tab-btn" id="tabNavWheel" onclick="switchTab('wheel')">Колесо</button>
+        <button class="tab-btn" id="tabNavRecords" onclick="switchTab('records')">🏆 База (<span id="debtorsBadge">0</span>)</button>
         <button class="tab-btn" id="tabNavSettings" onclick="switchTab('settings')">Настройки</button>
       </div>
-      <button class="btn btn-secondary" style="background: #1e1e24; border: 1px solid #2d2d38; color: #00e6cb; font-size: 12px; padding: 8px 14px;" onclick="toggleAfkMode(true)">📺 AFK Заглушка (A)</button>
+      <button class="btn btn-secondary" style="background: #1e1e24; border: 1px solid #2d2d38; color: #00e6cb; font-size: 12px; padding: 8px 14px; flex: initial;" onclick="toggleAfkMode(true)">📺 AFK Заглушка (A)</button>
     </div>
   </div>
 
@@ -891,7 +1031,57 @@
       </div>
     </div>
 
-    <!-- 3. ВКЛАДКА: НАСТРОЙКИ -->
+    <!-- 3. ВКЛАДКА: БАЗА (ПОБЕДИТЕЛИ И ДОЛЖНИКИ) -->
+    <div id="tabRecords">
+      <div class="records-grid">
+        
+        <!-- Таблица победителей за всё время -->
+        <div class="record-panel">
+          <div class="record-header winners-title">
+            <h3>🏆 Победители за всё время</h3>
+            <button class="btn-sort" style="color: #eb0400; border-color: #5c1818;" onclick="clearWinnersStats()">Сбросить</button>
+          </div>
+
+          <div class="input-group" style="margin-bottom: 12px;">
+            <input type="text" id="winnerManualName" placeholder="Участник / Лот">
+            <input type="number" id="winnerManualCount" placeholder="Побед" value="1" min="1" style="flex: 0.6;">
+            <button class="btn btn-primary" style="flex: 0.6; padding: 10px;" onclick="addManualWinner()">+ Добавить</button>
+          </div>
+
+          <div style="margin-bottom: 12px; font-size: 12px; color: #adadb8; display: flex; justify-content: space-between; align-items: center;">
+            <label class="checkbox-label">
+              <input type="checkbox" id="autoRecordWinnerCheckbox" onchange="toggleAutoRecordWinner(this.checked)">
+              <span>Автозапись победителей после прокрута</span>
+            </label>
+          </div>
+
+          <div class="record-list" id="winnersStatsList"></div>
+        </div>
+
+        <!-- Список должников -->
+        <div class="record-panel">
+          <div class="record-header debtors-title">
+            <h3>💀 Список должников (<span id="debtorsCountHeader">0</span>)</h3>
+            <button class="btn-sort" style="color: #eb0400; border-color: #5c1818;" onclick="clearDebtorsList()">Очистить</button>
+          </div>
+
+          <div class="input-group" style="margin-bottom: 12px;">
+            <input type="text" id="debtorNameInput" placeholder="Ник должника" style="flex: 1.1;">
+            <input type="text" id="debtorNoteInput" placeholder="Что должен (сумма / условие)" style="flex: 1.5;">
+            <button class="btn btn-primary" style="flex: 0.7; background: #e74c3c; padding: 10px;" onclick="addDebtor()">Записать</button>
+          </div>
+
+          <div style="margin-bottom: 12px; font-size: 12px; color: #777;">
+            Записывайте сюда тех, кто задолжал донат, косплей, челлендж или ставку.
+          </div>
+
+          <div class="record-list" id="debtorsList"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. ВКЛАДКА: НАСТРОЙКИ -->
     <div id="tabSettings">
       <div class="settings-panel">
         <h4 class="settings-section-title">Визуал колеса (по умолчанию всё выключено)</h4>
@@ -1001,7 +1191,7 @@
 
         <div class="settings-row">
           <div class="settings-label">
-            <span>Экспорт / Импорт лотов</span>
+            <span>Экспорт / Импорт базы (лоты, победители, должники)</span>
           </div>
           <div class="btn-action-group">
             <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
@@ -1036,6 +1226,9 @@
     const STORAGE_KEY_CUSTOM_TICK = "pointauc_clone_custom_tick";
     const STORAGE_KEY_CUSTOM_WIN = "pointauc_clone_custom_win";
     const STORAGE_KEY_SPIN_DURATION = "pointauc_clone_spin_duration";
+    const STORAGE_KEY_WINNERS_STATS = "pointauc_clone_winners_stats";
+    const STORAGE_KEY_DEBTORS = "pointauc_clone_debtors";
+    const STORAGE_KEY_AUTO_RECORD_WINNER = "pointauc_clone_auto_record_winner";
 
     let currentMode = localStorage.getItem(STORAGE_KEY_MODE) || 'classic';
     let currentTab = localStorage.getItem(STORAGE_KEY_TAB) || 'bidding';
@@ -1056,6 +1249,22 @@
     let customTickBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_TICK) || '';
     let customWinBase64 = localStorage.getItem(STORAGE_KEY_CUSTOM_WIN) || '';
 
+    // Настройка автозаписи победителей (по умолчанию включена)
+    let autoRecordWinner = localStorage.getItem(STORAGE_KEY_AUTO_RECORD_WINNER) !== 'false';
+
+    // Загрузка таблицы победителей и списка должников
+    let winnersStats = [];
+    try {
+      const savedWinners = localStorage.getItem(STORAGE_KEY_WINNERS_STATS);
+      if (savedWinners) winnersStats = JSON.parse(savedWinners);
+    } catch (e) { winnersStats = []; }
+
+    let debtorsList = [];
+    try {
+      const savedDebtors = localStorage.getItem(STORAGE_KEY_DEBTORS);
+      if (savedDebtors) debtorsList = JSON.parse(savedDebtors);
+    } catch (e) { debtorsList = []; }
+
     // Машина времени (Отмена действий)
     let historyStack = [];
     let toastTimeout;
@@ -1071,7 +1280,7 @@
     function pushToHistory() {
       historyStack.push(JSON.stringify(items));
       if (historyStack.length > 20) {
-        historyStack.shift(); // Храним только последние 20 шагов
+        historyStack.shift();
       }
     }
 
@@ -1094,6 +1303,196 @@
       } else {
         showToast("Нет действий для отмены");
       }
+    }
+
+    // Функции для Таблицы Победителей и Должников
+    function saveWinnersStats() {
+      localStorage.setItem(STORAGE_KEY_WINNERS_STATS, JSON.stringify(winnersStats));
+    }
+
+    function saveDebtors() {
+      localStorage.setItem(STORAGE_KEY_DEBTORS, JSON.stringify(debtorsList));
+      updateDebtorsBadge();
+    }
+
+    function updateDebtorsBadge() {
+      const count = debtorsList.length;
+      const badge = document.getElementById("debtorsBadge");
+      const headerCount = document.getElementById("debtorsCountHeader");
+      if (badge) badge.textContent = count;
+      if (headerCount) headerCount.textContent = count;
+    }
+
+    function toggleAutoRecordWinner(checked) {
+      autoRecordWinner = checked;
+      localStorage.setItem(STORAGE_KEY_AUTO_RECORD_WINNER, checked ? 'true' : 'false');
+    }
+
+    function recordWinnerStat(rawName, countToAdd = 1) {
+      const cleanName = (rawName || "").trim();
+      if (!cleanName) return;
+
+      const existing = winnersStats.find(w => w.name.toLowerCase() === cleanName.toLowerCase());
+      const nowStr = new Date().toLocaleDateString('ru-RU');
+      if (existing) {
+        existing.wins += countToAdd;
+        existing.lastWin = nowStr;
+      } else {
+        winnersStats.push({
+          id: Date.now() + Math.floor(Math.random() * 10000),
+          name: cleanName,
+          wins: countToAdd,
+          lastWin: nowStr
+        });
+      }
+      saveWinnersStats();
+      if (currentTab === 'records') renderWinnersStats();
+    }
+
+    function addManualWinner() {
+      const nameEl = document.getElementById("winnerManualName");
+      const countEl = document.getElementById("winnerManualCount");
+      const name = nameEl.value.trim();
+      const count = parseInt(countEl.value) || 1;
+      if (!name || count < 1) return;
+
+      recordWinnerStat(name, count);
+      nameEl.value = "";
+      countEl.value = "1";
+      renderWinnersStats();
+      showToast(`Победитель "${name}" записан!`);
+    }
+
+    function changeWinnerCount(id, delta) {
+      const item = winnersStats.find(w => w.id === id);
+      if (!item) return;
+      item.wins += delta;
+      if (item.wins <= 0) {
+        winnersStats = winnersStats.filter(w => w.id !== id);
+      }
+      saveWinnersStats();
+      renderWinnersStats();
+    }
+
+    function removeWinnerStat(id) {
+      winnersStats = winnersStats.filter(w => w.id !== id);
+      saveWinnersStats();
+      renderWinnersStats();
+    }
+
+    function clearWinnersStats() {
+      if (winnersStats.length === 0) return;
+      if (confirm("Точно очистить всю таблицу победителей за всё время?")) {
+        winnersStats = [];
+        saveWinnersStats();
+        renderWinnersStats();
+        showToast("Таблица победителей очищена");
+      }
+    }
+
+    function renderWinnersStats() {
+      const listEl = document.getElementById("winnersStatsList");
+      if (!listEl) return;
+      listEl.innerHTML = "";
+
+      const sorted = [...winnersStats].sort((a, b) => b.wins - a.wins);
+
+      if (sorted.length === 0) {
+        listEl.innerHTML = `<div class="empty-placeholder">Пока нет записанных победителей.<br>Крутите колесо или добавьте вручную!</div>`;
+        return;
+      }
+
+      sorted.forEach((w, index) => {
+        const rankClass = index === 0 ? 'top-1' : (index === 1 ? 'top-2' : (index === 2 ? 'top-3' : ''));
+        const row = document.createElement("div");
+        row.className = `record-card winner-card ${rankClass}`;
+        row.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+            <span class="rank-badge">#${index + 1}</span>
+            <div style="display:flex; flex-direction:column; overflow:hidden;">
+              <span class="item-title" title="${w.name}">${w.name}</span>
+              <span class="debt-date">Посл. победа: ${w.lastWin || '—'}</span>
+            </div>
+          </div>
+          <div class="item-controls">
+            <span class="win-badge">🏆 ${w.wins}</span>
+            <button class="btn-quick" onclick="changeWinnerCount(${w.id}, 1)" title="Добавить победу">+1</button>
+            <button class="btn-quick" onclick="changeWinnerCount(${w.id}, -1)" title="Убрать победу">-1</button>
+            <button class="btn-del" onclick="removeWinnerStat(${w.id})" title="Удалить из базы">&times;</button>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function addDebtor() {
+      const nameEl = document.getElementById("debtorNameInput");
+      const noteEl = document.getElementById("debtorNoteInput");
+      const name = nameEl.value.trim();
+      const note = noteEl.value.trim() || "Без описания";
+      if (!name) return;
+
+      debtorsList.unshift({
+        id: Date.now() + Math.floor(Math.random() * 10000),
+        name,
+        note,
+        date: new Date().toLocaleDateString('ru-RU')
+      });
+
+      nameEl.value = "";
+      noteEl.value = "";
+      saveDebtors();
+      renderDebtors();
+      showToast(`Должник "${name}" добавлен в список`);
+    }
+
+    function removeDebtor(id, forgiven = false) {
+      const target = debtorsList.find(d => d.id === id);
+      debtorsList = debtorsList.filter(d => d.id !== id);
+      saveDebtors();
+      renderDebtors();
+      if (forgiven && target) {
+        showToast(`Долг "${target.name}" закрыт!`);
+      }
+    }
+
+    function clearDebtorsList() {
+      if (debtorsList.length === 0) return;
+      if (confirm("Точно очистить весь список должников?")) {
+        debtorsList = [];
+        saveDebtors();
+        renderDebtors();
+        showToast("Список должников очищен");
+      }
+    }
+
+    function renderDebtors() {
+      const listEl = document.getElementById("debtorsList");
+      if (!listEl) return;
+      listEl.innerHTML = "";
+      updateDebtorsBadge();
+
+      if (debtorsList.length === 0) {
+        listEl.innerHTML = `<div class="empty-placeholder">Должников нет! Все чисты перед аукционом.</div>`;
+        return;
+      }
+
+      debtorsList.forEach((d) => {
+        const row = document.createElement("div");
+        row.className = "record-card debtor-card";
+        row.innerHTML = `
+          <div style="display:flex; flex-direction:column; overflow:hidden; max-width: 65%;">
+            <span class="item-title" title="${d.name}">${d.name}</span>
+            <span class="debt-note">${d.note}</span>
+            <span class="debt-date">Записан: ${d.date || '—'}</span>
+          </div>
+          <div class="item-controls">
+            <button class="btn-forgive" onclick="removeDebtor(${d.id}, true)" title="Закрыть долг">✓ Простить</button>
+            <button class="btn-del" onclick="removeDebtor(${d.id}, false)" title="Удалить">&times;</button>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
     }
 
     const colorThemes = {
@@ -1248,10 +1647,12 @@
 
       document.getElementById("tabBidding").style.display = (tab === 'bidding') ? 'flex' : 'none';
       document.getElementById("tabWheel").style.display = (tab === 'wheel') ? 'flex' : 'none';
+      document.getElementById("tabRecords").style.display = (tab === 'records') ? 'flex' : 'none';
       document.getElementById("tabSettings").style.display = (tab === 'settings') ? 'flex' : 'none';
 
       document.getElementById("tabNavBidding").classList.toggle('active', tab === 'bidding');
       document.getElementById("tabNavWheel").classList.toggle('active', tab === 'wheel');
+      document.getElementById("tabNavRecords").classList.toggle('active', tab === 'records');
       document.getElementById("tabNavSettings").classList.toggle('active', tab === 'settings');
 
       if (tab === 'wheel') {
@@ -1259,6 +1660,9 @@
         drawWheel(currentAngleOffset);
       } else if (tab === 'bidding') {
         renderList();
+      } else if (tab === 'records') {
+        renderWinnersStats();
+        renderDebtors();
       }
     }
 
@@ -1737,11 +2141,15 @@
     }
 
     function exportItems() {
-      if (items.length === 0) { alert("Список лотов пуст!"); return; }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+      const payload = {
+        items,
+        winnersStats,
+        debtorsList
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", `auction_lots_${new Date().toISOString().slice(0,10)}.json`);
+      a.setAttribute("download", `auction_backup_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1759,18 +2167,36 @@
       reader.onload = function(e) {
         try {
           const parsed = JSON.parse(e.target.result);
-          if (!Array.isArray(parsed)) throw new Error();
-          const valid = parsed.filter(i => i && typeof i.name === 'string' && typeof i.amount === 'number' && i.amount > 0);
-          if (valid.length === 0) { alert("Лоты не найдены!"); return; }
-          
           pushToHistory();
-          let tid = Date.now();
-          items = valid.map(i => ({ id: i.id || tid++, name: i.name, amount: i.amount, eliminated: !!i.eliminated }));
+
+          if (Array.isArray(parsed)) {
+            const valid = parsed.filter(i => i && typeof i.name === 'string' && typeof i.amount === 'number' && i.amount > 0);
+            let tid = Date.now();
+            items = valid.map(i => ({ id: i.id || tid++, name: i.name, amount: i.amount, eliminated: !!i.eliminated }));
+          } else if (parsed && typeof parsed === 'object') {
+            if (Array.isArray(parsed.items)) {
+              let tid = Date.now();
+              items = parsed.items.map(i => ({ id: i.id || tid++, name: i.name, amount: i.amount, eliminated: !!i.eliminated }));
+            }
+            if (Array.isArray(parsed.winnersStats)) {
+              winnersStats = parsed.winnersStats;
+              saveWinnersStats();
+            }
+            if (Array.isArray(parsed.debtorsList)) {
+              debtorsList = parsed.debtorsList;
+              saveDebtors();
+            }
+          } else {
+            throw new Error();
+          }
+
           saveItems();
           renderList();
           renderWheelSidebar();
+          renderWinnersStats();
+          renderDebtors();
           drawWheel(currentAngleOffset);
-          showToast(`Успешно импортировано лотов: ${items.length}`);
+          showToast(`Данные успешно импортированы!`);
         } catch (err) {
           alert("Ошибка при чтении JSON-файла!");
         }
@@ -1985,7 +2411,7 @@
         return;
       }
 
-      pushToHistory(); // Сохраняем состояние перед выбыванием
+      pushToHistory();
       initAudio();
       isSpinning = true;
       document.getElementById("spinBtn").disabled = true;
@@ -2042,6 +2468,9 @@
           if (currentMode === 'classic') {
             banner.textContent = `🎉 Победил: ${selectedItem.name}!`;
             playWinSound();
+            if (autoRecordWinner) {
+              recordWinnerStat(selectedItem.name, 1);
+            }
           } else {
             playEliminateSound();
             banner.classList.add("eliminated");
@@ -2057,6 +2486,9 @@
                 banner.classList.remove("eliminated");
                 banner.textContent = `🏆 Финальный победитель: ${remaining[0].name}!`;
                 playWinSound();
+                if (autoRecordWinner) {
+                  recordWinnerStat(remaining[0].name, 1);
+                }
               }, 1200);
             }
           }
@@ -2070,9 +2502,7 @@
     document.addEventListener('keydown', function(e) {
       const activeTag = document.activeElement.tagName;
       
-      // Обработка Ctrl+Z / Cmd+Z для отмены
       if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') {
-        // Если мы в инпуте, пусть работает стандартная отмена текста
         if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
           return;
         }
@@ -2081,7 +2511,6 @@
         return;
       }
 
-      // Если мы в инпуте, блокируем все остальные горячие клавиши
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
         return; 
       }
@@ -2112,6 +2541,7 @@
     document.getElementById("hideEliminatedCheckbox").checked = hideEliminated;
     document.getElementById("smartMergeCheckbox").checked = smartMergeEnabled;
     document.getElementById("forceSeparateCheckbox").checked = forceSeparateEnabled;
+    document.getElementById("autoRecordWinnerCheckbox").checked = autoRecordWinner;
     document.getElementById("themeSelect").value = currentTheme;
     document.getElementById("wheelThemeSelect").value = currentTheme;
     document.getElementById("glowCheckbox").checked = isGlowEnabled;
@@ -2134,6 +2564,7 @@
     toggleGlow(isGlowEnabled);
     applyCenterMedia();
     applyAudioButtons();
+    updateDebtorsBadge();
 
     setSortMode(sortMode);
     setMode(currentMode);
