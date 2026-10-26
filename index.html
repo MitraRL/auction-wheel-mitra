@@ -200,7 +200,6 @@
       color: #fff;
     }
 
-    /* Плашка Общего Банка */
     .total-bank-badge {
       background: rgba(0, 230, 203, 0.1);
       border: 1px solid rgba(0, 230, 203, 0.4);
@@ -833,7 +832,6 @@
       gap: 8px;
     }
 
-    /* Анимация Toast-уведомления */
     #toast {
       visibility: hidden;
       min-width: 250px;
@@ -1010,7 +1008,7 @@
         <div class="items-table" id="itemsList"></div>
 
         <button class="btn-goto-wheel" onclick="switchTab('wheel')">
-          Крутить колесо (Лотов: <span id="lotsCount">0</span> &nbsp;|&nbsp; Банк: <span id="btnTotalBank">0</span>)
+          Перейти к колесу (Лотов: <span id="lotsCount">0</span> &nbsp;|&nbsp; Банк: <span id="btnTotalBank">0</span>)
         </button>
       </div>
     </div>
@@ -1026,7 +1024,7 @@
           </div>
 
           <div style="display: flex; gap: 12px; align-items: center;">
-            <button class="btn-spin" id="spinBtn" onclick="spin()">Крутить (Space)</button>
+            <button class="btn-spin" id="spinBtn" onclick="spin()">СКАМ (Space)</button>
             <button class="btn-action" style="background:#26262f; border:1px solid #383846; color:#adadb8; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer;" onclick="switchTab('bidding')">← Назад к ставкам</button>
           </div>
 
@@ -1351,7 +1349,6 @@
       }
     }
 
-    // Подсчет и обновление общей суммы (банка) всех слотов
     function updateTotalBankUI() {
       const totalSum = items.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
       const formatted = totalSum.toLocaleString('ru-RU');
@@ -2484,6 +2481,7 @@
 
       const duration = spinDuration * 1000;
       const weights = getWeights();
+
       const rand = Math.random();
       let acc = 0;
       let targetIndex = 0;
