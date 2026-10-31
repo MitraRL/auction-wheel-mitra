@@ -293,6 +293,20 @@
     }
     input:focus { border-color: #9146ff; }
 
+    /* Компактное поле ввода секунд вращения */
+    .spin-num-input {
+      flex: initial !important;
+      width: 58px;
+      padding: 5px 6px !important;
+      font-size: 13px !important;
+      font-weight: 700;
+      text-align: center;
+      background: #121214;
+      border: 1px solid #383846;
+      color: #00e6cb !important;
+      border-radius: 6px;
+    }
+
     .items-table {
       display: flex;
       flex-direction: column;
@@ -1049,10 +1063,10 @@
 
           <div class="wheel-custom-box">
             <div class="wheel-custom-row">
-              <span title="Время вращения колеса">Время вращения:</span>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="range" id="wheelSpinDurationInput" min="3" max="90" value="7" oninput="changeSpinDuration(this.value)" style="width: 80px;">
-                <span id="wheelSpinDurationLabel" style="min-width: 30px; text-align:right;">7s</span>
+              <span title="Время вращения колеса (сек)">Время вращения (с):</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="range" id="wheelSpinDurationInput" min="1" max="120" value="7" oninput="changeSpinDuration(this.value)" style="width: 75px;">
+                <input type="number" id="wheelSpinDurationNumber" class="spin-num-input" min="1" max="600" value="7" oninput="changeSpinDuration(this.value)" title="Ввести время вручную (сек)">
               </div>
             </div>
 
@@ -1136,11 +1150,11 @@
         <div class="settings-row">
           <div class="settings-label">
             <span>Время вращения колеса (сек)</span>
-            <small>От 3 до 90 секунд</small>
+            <small>Можно двигать ползунок или вписать число вручную</small>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <input type="range" id="spinDurationInput" min="3" max="90" value="7" oninput="changeSpinDuration(this.value)">
-            <span id="spinDurationLabel" style="min-width: 30px; text-align:right;">7s</span>
+            <input type="range" id="spinDurationInput" min="1" max="120" value="7" oninput="changeSpinDuration(this.value)">
+            <input type="number" id="spinDurationNumber" class="spin-num-input" min="1" max="600" value="7" oninput="changeSpinDuration(this.value)" title="Ввести время вручную (сек)">
           </div>
         </div>
 
@@ -1983,18 +1997,20 @@
     }
 
     function changeSpinDuration(val) {
-      spinDuration = parseInt(val);
+      const parsed = parseInt(val);
+      if (isNaN(parsed) || parsed < 1) return;
+      spinDuration = Math.min(600, parsed);
       localStorage.setItem(STORAGE_KEY_SPIN_DURATION, spinDuration);
       
-      const el1 = document.getElementById("spinDurationInput");
-      const el2 = document.getElementById("wheelSpinDurationInput");
-      const lbl1 = document.getElementById("spinDurationLabel");
-      const lbl2 = document.getElementById("wheelSpinDurationLabel");
+      const r1 = document.getElementById("spinDurationInput");
+      const r2 = document.getElementById("wheelSpinDurationInput");
+      const n1 = document.getElementById("spinDurationNumber");
+      const n2 = document.getElementById("wheelSpinDurationNumber");
       
-      if(el1) el1.value = spinDuration;
-      if(el2) el2.value = spinDuration;
-      if(lbl1) lbl1.textContent = spinDuration + "s";
-      if(lbl2) lbl2.textContent = spinDuration + "s";
+      if (r1) r1.value = Math.min(120, spinDuration);
+      if (r2) r2.value = Math.min(120, spinDuration);
+      if (n1 && document.activeElement !== n1) n1.value = spinDuration;
+      if (n2 && document.activeElement !== n2) n2.value = spinDuration;
     }
 
     function setSortMode(mode) {
@@ -2611,14 +2627,7 @@
     document.getElementById("borderWidthInput").value = sectorBorderWidth;
     document.getElementById("hubSizeInput").value = hubSize;
     
-    const el1 = document.getElementById("spinDurationInput");
-    const el2 = document.getElementById("wheelSpinDurationInput");
-    const lbl1 = document.getElementById("spinDurationLabel");
-    const lbl2 = document.getElementById("wheelSpinDurationLabel");
-    if(el1) el1.value = spinDuration;
-    if(el2) el2.value = spinDuration;
-    if(lbl1) lbl1.textContent = spinDuration + "s";
-    if(lbl2) lbl2.textContent = spinDuration + "s";
+    changeSpinDuration(spinDuration);
     
     document.getElementById("wheelPointer").style.borderTopColor = pointerColor;
 
